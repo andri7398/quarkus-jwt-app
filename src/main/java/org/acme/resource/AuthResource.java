@@ -22,24 +22,32 @@ public class AuthResource {
     @Path("/register")
     @Transactional
     public Response register(UserDTO dto) {
-        User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setPassword(dto.getUsername());
-        boolean created = userService.register(user);
-        if (!created) {
-            return Response.status(Response.Status.CONFLICT).entity("User already exists").build();
+        try {
+            User user = new User();
+            user.setUsername(dto.getUsername());
+            user.setPassword(dto.getUsername());
+            boolean created = userService.register(user);
+            if (!created) {
+                return Response.status(Response.Status.CONFLICT).entity("User already exists").build();
+            }
+            return Response.ok("User Registered").build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return Response.ok("User Registered").build();
     }
 
     @POST
     @Path("/login")
     public Response login(UserDTO dto) {
-        User user = userService.authenticate(dto.getUsername(), dto.getPassword());
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+        try {
+            User user = userService.authenticate(dto.getUsername(), dto.getPassword());
+            if (user == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+            String token = JwtUtil.generateToken(user.getUsername());
+            return Response.ok().entity("{\"token\":\"" + token + "\"}").build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        String token = JwtUtil.generateToken(user.getUsername());
-        return Response.ok().entity("{\"token\":\"" + token + "\"}").build();
     }
 }
