@@ -8,12 +8,18 @@ import jakarta.ws.rs.core.Response;
 import org.acme.dto.UserDTO;
 import org.acme.model.User;
 import org.acme.service.UserService;
+import org.acme.util.ErrorResponse;
 import org.acme.util.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuthResource {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthResource.class);
 
     @Inject
     UserService userService;
@@ -32,7 +38,10 @@ public class AuthResource {
             }
             return Response.ok("User Registered").build();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            LOGGER.error("error : ", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Something went wrong: " + e.getMessage(), 500))
+                    .build();
         }
     }
 
@@ -42,12 +51,18 @@ public class AuthResource {
         try {
             User user = userService.authenticate(dto.getUsername(), dto.getPassword());
             if (user == null) {
-                return Response.status(Response.Status.UNAUTHORIZED).build();
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity("{\"error\": \"Invalid username or password\"}")
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
             }
             String token = JwtUtil.generateToken(user.getUsername());
             return Response.ok().entity("{\"token\":\"" + token + "\"}").build();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            LOGGER.error("error : ", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Something went wrong: " + e.getMessage(), 500))
+                    .build();
         }
     }
 }

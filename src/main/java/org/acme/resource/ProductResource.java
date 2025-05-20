@@ -13,15 +13,21 @@ import org.acme.dto.SearchDTO;
 import org.acme.dto.SearchPriceDTO;
 import org.acme.model.Product;
 import org.acme.repository.ProductRepository;
+import org.acme.util.ErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Path("/products")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed("user")
 public class ProductResource {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProductResource.class);
+
     @Inject
     ProductRepository productRepository;
 
@@ -30,7 +36,12 @@ public class ProductResource {
 
     @GET
     public List<Product> getAllProducts() {
-        return productRepository.listAll();
+        try {
+            return productRepository.listAll();
+        } catch (Exception e) {
+            LOGGER.info("Error : ", e);
+            return null;
+        }
     }
 
     @POST
@@ -39,7 +50,8 @@ public class ProductResource {
         try {
             return productRepository.searchByName(dto.getName());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            LOGGER.info("Error : ", e);
+            return null;
         }
     }
 
@@ -49,7 +61,8 @@ public class ProductResource {
         try {
             return productRepository.searchByPriceRange(dto.getMinPrice(), dto.getMaxPrice());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            LOGGER.info("Error : ", e);
+            return null;
         }
     }
 
@@ -85,7 +98,10 @@ public class ProductResource {
                     .build();
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            LOGGER.info("Error : ", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Something went wrong: " + e.getMessage(), 500))
+                    .build();
         }
     }
 
@@ -112,7 +128,10 @@ public class ProductResource {
                     .build();
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            LOGGER.info("Error : ", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Something went wrong: " + e.getMessage(), 500))
+                    .build();
         }
     }
 
