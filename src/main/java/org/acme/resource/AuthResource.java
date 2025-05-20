@@ -25,7 +25,7 @@ public class AuthResource {
         try {
             User user = new User();
             user.setUsername(dto.getUsername());
-            user.setPassword(dto.getUsername());
+            user.setPassword(dto.getPassword());
             boolean created = userService.register(user);
             if (!created) {
                 return Response.status(Response.Status.CONFLICT).entity("User already exists").build();
